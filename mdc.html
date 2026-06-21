@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRON RIDGE TASK FORCE — MDC</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #111611; font-family: 'Courier New', Courier, monospace; color: #c8d8c8; min-height: 100vh; }
+.mdc-root { max-width: 1100px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+.mdc-header {
+  background: #0d110d; border-bottom: 2px solid #2a6b2a;
+  padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;
+}
+.mdc-title { font-size: 14px; font-weight: 700; color: #5dca7a; letter-spacing: 3px; text-transform: uppercase; }
+.mdc-clock { font-size: 12px; color: #5dca7a; letter-spacing: 2px; }
+.mdc-nav { display: flex; background: #111611; border-bottom: 1px solid #2a4a2a; }
+.mdc-nav-btn {
+  padding: 9px 20px; font-size: 11px; letter-spacing: 1.5px; color: #6a9a6a;
+  border: none; background: transparent; cursor: pointer; border-right: 1px solid #2a4a2a;
+  text-transform: uppercase; transition: background 0.15s; font-family: 'Courier New', monospace;
+}
+.mdc-nav-btn:hover { background: #1e2e1e; color: #9ad89a; }
+.mdc-nav-btn.active { background: #1a3a1a; color: #5dca7a; border-bottom: 2px solid #5dca7a; }
+.mdc-body { padding: 16px 20px; flex: 1; }
+.section-label {
+  font-size: 10px; letter-spacing: 3px; color: #4a7a4a; text-transform: uppercase;
+  margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #2a4a2a;
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* STATS */
+.mdc-stats { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.stat-box { flex: 1; min-width: 100px; background: #0d110d; border: 1px solid #2a4a2a; border-radius: 2px; padding: 8px 10px; text-align: center; }
+.stat-num { font-size: 22px; font-weight: 700; }
+.stat-lbl { font-size: 9px; letter-spacing: 2px; color: #4a7a4a; text-transform: uppercase; margin-top: 2px; }
+
+/* TABLE */
+.unit-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.unit-table th {
+  text-align: left; padding: 6px 10px; font-size: 10px; letter-spacing: 2px;
+  color: #4a7a4a; border-bottom: 1px solid #2a4a2a; font-weight: 400; text-transform: uppercase;
+}
+.unit-table td { padding: 7px 10px; border-bottom: 1px solid #1a2a1a; vertical-align: middle; }
+.unit-table tr:hover td { background: #1e2e1e; }
+.unit-callsign { font-weight: 700; color: #5dca7a; letter-spacing: 1px; }
+.unit-name { color: #8ab88a; }
+
+/* BADGES */
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; cursor: pointer;
+  border: 1px solid transparent; transition: opacity 0.15s; font-family: 'Courier New', monospace;
+}
+.badge:hover { opacity: 0.8; }
+.b-available   { background: #0d2e0d; color: #5dca7a; border-color: #2a6b2a; }
+.b-unavailable { background: #2e2e0d; color: #c8c840; border-color: #6b6b10; }
+.b-code6       { background: #2e0d0d; color: #e84040; border-color: #6b1a1a; }
+.b-code7       { background: #1a1a2e; color: #7070e8; border-color: #2a2a6b; }
+
+/* STATUS DROPDOWN */
+.status-menu {
+  position: fixed; background: #0d110d; border: 1px solid #2a6b2a; z-index: 9999;
+  min-width: 150px; border-radius: 2px; box-shadow: 0 4px 16px rgba(0,0,0,0.8);
+}
+.status-menu-item {
+  display: block; width: 100%; text-align: left; padding: 8px 14px; font-size: 11px;
+  letter-spacing: 1px; text-transform: uppercase; border: none; background: transparent;
+  cursor: pointer; font-family: 'Courier New', monospace; transition: background 0.1s;
+}
+.status-menu-item:hover { background: #1e2e1e; }
+
+/* INPUTS */
+.mdc-input {
+  background: #0d110d; border: 1px solid #2a4a2a; color: #9ad89a;
+  font-family: 'Courier New', monospace; font-size: 11px; padding: 6px 8px;
+  border-radius: 2px; outline: none; letter-spacing: 1px;
+}
+.mdc-input:focus { border-color: #5dca7a; }
+.mdc-input::placeholder { color: #3a5a3a; }
+.mdc-input.full { width: 100%; margin-bottom: 6px; }
+.mdc-btn {
+  background: #1a3a1a; border: 1px solid #2a6b2a; color: #5dca7a;
+  font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 6px 14px; cursor: pointer; border-radius: 2px; transition: background 0.15s;
+}
+.mdc-btn:hover { background: #1e4a1e; }
+.mdc-btn-danger {
+  background: #2e0d0d; border: 1px solid #6b1a1a; color: #e84040;
+  font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; padding: 4px 8px; cursor: pointer; border-radius: 2px; transition: background 0.15s;
+}
+.mdc-btn-danger:hover { background: #3e1515; }
+.add-row { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #2a4a2a; align-items: center; flex-wrap: wrap; }
+
+/* KOMUNIKATY */
+.msg-card { background: #0d110d; border: 1px solid #2a4a2a; border-radius: 2px; padding: 10px 14px; margin-bottom: 8px; }
+.msg-card.priority { border-color: #6b4a10; }
+.msg-card.urgent   { border-color: #6b1a1a; }
+.msg-meta { font-size: 10px; color: #4a7a4a; letter-spacing: 1px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+.msg-from { color: #5dca7a; }
+.msg-text { font-size: 12px; color: #c8d8c8; line-height: 1.6; }
+.msg-priority-badge { font-size: 9px; letter-spacing: 1px; padding: 1px 7px; border-radius: 2px; text-transform: uppercase; font-weight: 700; }
+.mp-normal   { background: #0d2e0d; color: #5dca7a; border: 1px solid #2a6b2a; }
+.mp-priority { background: #2e1f0d; color: #e8a030; border: 1px solid #6b4a10; }
+.mp-urgent   { background: #2e0d0d; color: #e84040; border: 1px solid #6b1a1a; }
+.msg-form { background: #0d110d; border: 1px solid #2a4a2a; border-radius: 2px; padding: 14px; margin-top: 12px; }
+.msg-form textarea {
+  background: #111611; border: 1px solid #2a4a2a; color: #9ad89a;
+  font-family: 'Courier New', monospace; font-size: 11px; padding: 6px 8px;
+  border-radius: 2px; outline: none; width: 100%; resize: vertical; min-height: 70px; margin-bottom: 8px;
+}
+.msg-form textarea:focus { border-color: #5dca7a; }
+.form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mdc-select {
+  background: #0d110d; border: 1px solid #2a4a2a; color: #9ad89a;
+  font-family: 'Courier New', monospace; font-size: 11px; padding: 6px 8px; border-radius: 2px; outline: none;
+}
+
+/* BOLO */
+.bolo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.bolo-card { background: #0d110d; border: 1px solid #6b1a1a; border-radius: 2px; overflow: hidden; display: flex; flex-direction: column; }
+.bolo-card.resolved { border-color: #2a4a2a; opacity: 0.45; }
+.bolo-img-wrap { position: relative; width: 100%; background: #070a07; }
+.bolo-img-wrap img { width: 100%; display: block; max-height: 280px; object-fit: contain; cursor: zoom-in; }
+.bolo-img-overlay {
+  position: absolute; top: 6px; left: 6px; font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  color: #e84040; background: rgba(10,4,4,0.88); border: 1px solid #6b1a1a; padding: 2px 7px; border-radius: 2px;
+}
+.bolo-card.resolved .bolo-img-overlay { color: #5dca7a; border-color: #2a6b2a; background: rgba(4,10,4,0.88); }
+.bolo-label { font-size: 10px; color: #8a7a7a; padding: 5px 8px 0; letter-spacing: 1px; text-transform: uppercase; }
+.bolo-actions { display: flex; gap: 6px; padding: 8px; border-top: 1px solid #1a2a1a; margin-top: auto; }
+
+/* DROP ZONE */
+.drop-zone {
+  border: 1px dashed #2a6b2a; border-radius: 2px; padding: 28px 16px;
+  text-align: center; cursor: pointer; transition: background 0.15s; margin-top: 12px;
+}
+.drop-zone:hover, .drop-zone.dragover { background: #0d1f0d; }
+.drop-zone input[type=file] { display: none; }
+.drop-label { font-size: 11px; color: #4a7a4a; letter-spacing: 1px; text-transform: uppercase; line-height: 1.8; }
+.drop-label span { color: #5dca7a; text-decoration: underline; }
+.drop-preview { margin-top: 10px; }
+.drop-preview img { max-width: 100%; max-height: 180px; object-fit: contain; border: 1px solid #2a4a2a; border-radius: 2px; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 99999; align-items: center; justify-content: center; cursor: zoom-out;
+}
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 92vw; max-height: 92vh; object-fit: contain; border: 1px solid #2a6b2a; }
+
+/* FOOTER */
+.mdc-footer {
+  background: #0d110d; border-top: 1px solid #2a4a2a; padding: 6px 20px;
+  font-size: 10px; color: #3a5a3a; letter-spacing: 2px;
+  display: flex; justify-content: space-between; text-transform: uppercase; flex-wrap: wrap; gap: 6px;
+}
+
+/* SYNC INDICATOR */
+.sync-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #5dca7a; margin-right: 6px; animation: pulse 2s infinite; }
+.sync-dot.offline { background: #e84040; animation: none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.empty-state { color: #3a5a3a; font-size: 12px; padding: 14px 0; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<div class="mdc-root">
+  <div class="mdc-header">
+    <div class="mdc-title">&#9632; IRON RIDGE TASK FORCE — MDC</div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span id="syncStatus" style="font-size:10px;color:#4a7a4a;letter-spacing:1px"><span class="sync-dot" id="syncDot"></span>ŁĄCZENIE...</span>
+      <div class="mdc-clock" id="clock">--:--:--</div>
+    </div>
+  </div>
+  <div class="mdc-nav">
+    <button class="mdc-nav-btn active" onclick="switchTab('units',this)">Jednostki</button>
+    <button class="mdc-nav-btn" onclick="switchTab('komunikaty',this)">Komunikaty</button>
+    <button class="mdc-nav-btn" onclick="switchTab('bolo',this)">BOLO / Poszukiwani</button>
+  </div>
+
+  <!-- JEDNOSTKI -->
+  <div class="tab-pane active mdc-body" id="tab-units">
+    <div class="mdc-stats" id="statsBar"></div>
+    <div class="section-label">Lista aktywnych jednostek</div>
+    <table class="unit-table">
+      <thead>
+        <tr><th>Callsign</th><th>Oficer / Stopień</th><th>Pojazd</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody id="unitBody"></tbody>
+    </table>
+    <div class="add-row">
+      <input class="mdc-input" style="width:120px;text-transform:uppercase" id="inCallsign" placeholder="Callsign">
+      <input class="mdc-input" style="width:160px" id="inName" placeholder="Oficer / Stopień">
+      <input class="mdc-input" style="width:130px" id="inCar" placeholder="Pojazd">
+      <button class="mdc-btn" onclick="addUnit()">+ Dodaj</button>
+    </div>
+  </div>
+
+  <!-- KOMUNIKATY -->
+  <div class="tab-pane mdc-body" id="tab-komunikaty">
+    <div class="section-label">Komunikaty od dowództwa</div>
+    <div id="msgList"></div>
+    <div class="msg-form">
+      <div class="section-label" style="margin-bottom:10px">Nowy komunikat</div>
+      <input class="mdc-input full" id="msgFrom" placeholder="Od: (np. Sgt. Kowalski)">
+      <textarea id="msgText" placeholder="Treść komunikatu..."></textarea>
+      <div class="form-row">
+        <select class="mdc-select" id="msgPrio">
+          <option value="normal">Normalny</option>
+          <option value="priority">Priorytet</option>
+          <option value="urgent">Pilny</option>
+        </select>
+        <button class="mdc-btn" onclick="addMsg()">+ Wyślij</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOLO -->
+  <div class="tab-pane mdc-body" id="tab-bolo">
+    <div class="section-label">BOLO — Be On Look Out / Poszukiwani</div>
+    <div class="bolo-grid" id="boloList"></div>
+    <div class="msg-form">
+      <div class="section-label" style="margin-bottom:10px">Dodaj nowe BOLO</div>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('boloFileInput').click()">
+        <input type="file" id="boloFileInput" accept="image/*" onchange="onFileSelect(event)">
+        <div class="drop-label">Upuść zdjęcie / dokument BOLO tutaj<br>lub <span>wybierz plik</span></div>
+        <div class="drop-preview" id="dropPreview" style="display:none">
+          <img id="previewImg" src="" alt="podgląd">
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <input class="mdc-input full" id="boloLabel" placeholder="Etykieta (opcjonalnie, np. imię / nr sprawy)">
+        <div class="form-row" style="margin-top:8px">
+          <button class="mdc-btn" onclick="addBolo()">+ Dodaj BOLO</button>
+          <button class="mdc-btn-danger" onclick="clearBoloForm()">Wyczyść</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mdc-footer">
+    <span>IRON RIDGE TASK FORCE</span>
+    <span id="footerCount">JEDNOSTKI: —</span>
+    <span>FIREBASE SYNC</span>
+  </div>
+</div>
+
+<div id="statusMenu" class="status-menu" style="display:none;"></div>
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" alt="BOLO">
+</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, push, remove, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD31A2FsZ57B-RNguI0COY1kUji8c2X5Y8",
+  authDomain: "iron-ridge-mdc.firebaseapp.com",
+  databaseURL: "https://iron-ridge-mdc-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "iron-ridge-mdc",
+  storageBucket: "iron-ridge-mdc.firebasestorage.app",
+  messagingSenderId: "751527692078",
+  appId: "1:751527692078:web:1183b241fb03f3fb769cbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+const STATUSES = [
+  { key: 'available',   label: 'Available',    cls: 'b-available',   color: '#5dca7a' },
+  { key: 'unavailable', label: 'Not Available', cls: 'b-unavailable', color: '#c8c840' },
+  { key: 'code6',       label: 'Code 6',        cls: 'b-code6',       color: '#e84040' },
+  { key: 'code7',       label: 'Code 7',        cls: 'b-code7',       color: '#7070e8' },
+];
+
+let unitsData = {};
+let messagesData = {};
+let bolosData = {};
+let pendingImageData = null;
+
+function statusObj(key) { return STATUSES.find(s => s.key === key) || STATUSES[0]; }
+
+/* ── SYNC STATUS ── */
+function setSynced() {
+  document.getElementById('syncDot').classList.remove('offline');
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot" id="syncDot"></span>LIVE';
+}
+function setOffline() {
+  document.getElementById('syncDot').classList.add('offline');
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot offline" id="syncDot"></span>OFFLINE';
+}
+
+/* ── TAB ── */
+window.switchTab = function(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mdc-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+};
+
+/* ════════════════════════════
+   JEDNOSTKI
+════════════════════════════ */
+onValue(ref(db, 'units'), snap => {
+  unitsData = snap.val() || {};
+  renderUnits();
+  setSynced();
+}, () => setOffline());
+
+function renderUnits() {
+  const tbody = document.getElementById('unitBody');
+  const entries = Object.entries(unitsData);
+  tbody.innerHTML = entries.length === 0
+    ? `<tr><td colspan="5" class="empty-state">Brak jednostek w systemie.</td></tr>`
+    : '';
+
+  entries.forEach(([key, u]) => {
+    const s = statusObj(u.status);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="unit-callsign">${u.callsign}</td>
+      <td class="unit-name">${u.name}</td>
+      <td style="color:#7aaa7a;font-size:11px">${u.car}</td>
+      <td><span class="badge ${s.cls}" data-key="${key}">${s.label} ▾</span></td>
+      <td><button class="mdc-btn-danger" onclick="removeUnit('${key}')">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.badge[data-key]').forEach(el => {
+    el.addEventListener('click', function(e) { openMenu(e, this.dataset.key); });
+  });
+
+  renderStats(entries);
+  document.getElementById('footerCount').textContent = 'JEDNOSTKI: ' + entries.length;
+}
+
+function renderStats(entries) {
+  const c = { available:0, unavailable:0, code6:0, code7:0 };
+  entries.forEach(([,u]) => { if (c[u.status] !== undefined) c[u.status]++; });
+  document.getElementById('statsBar').innerHTML = STATUSES.map(s =>
+    `<div class="stat-box"><div class="stat-num" style="color:${s.color}">${c[s.key]}</div><div class="stat-lbl">${s.label}</div></div>`
+  ).join('');
+}
+
+function openMenu(e, key) {
+  e.stopPropagation();
+  const menu = document.getElementById('statusMenu');
+  menu.innerHTML = STATUSES.map(s =>
+    `<button class="status-menu-item" style="color:${s.color}" onclick="setStatus('${key}','${s.key}')">${s.label}</button>`
+  ).join('');
+  menu.style.left = e.clientX + 'px';
+  menu.style.top  = e.clientY + 'px';
+  menu.style.display = 'block';
+}
+
+window.setStatus = function(key, status) {
+  update(ref(db, 'units/' + key), { status });
+  document.getElementById('statusMenu').style.display = 'none';
+};
+
+window.removeUnit = function(key) {
+  remove(ref(db, 'units/' + key));
+};
+
+window.addUnit = function() {
+  const callsign = document.getElementById('inCallsign').value.trim().toUpperCase();
+  const name     = document.getElementById('inName').value.trim();
+  const car      = document.getElementById('inCar').value.trim();
+  if (!callsign || !name) return;
+  push(ref(db, 'units'), { callsign, name, car: car || '—', status: 'available' });
+  ['inCallsign','inName','inCar'].forEach(x => document.getElementById(x).value = '');
+};
+
+/* ════════════════════════════
+   KOMUNIKATY
+════════════════════════════ */
+onValue(ref(db, 'messages'), snap => {
+  messagesData = snap.val() || {};
+  renderMessages();
+});
+
+function renderMessages() {
+  const prioMap = {
+    normal:   ['mp-normal',  'Normalny'],
+    priority: ['mp-priority','Priorytet'],
+    urgent:   ['mp-urgent',  'Pilny'],
+  };
+  const entries = Object.entries(messagesData).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+  document.getElementById('msgList').innerHTML = entries.length === 0
+    ? '<div class="empty-state">Brak komunikatów.</div>'
+    : entries.map(([key, m]) => {
+        const [cls, lbl] = prioMap[m.prio] || prioMap.normal;
+        return `<div class="msg-card ${m.prio !== 'normal' ? m.prio : ''}">
+          <div class="msg-meta">
+            <span class="msg-from">${m.from}</span>
+            <span style="display:flex;gap:8px;align-items:center">
+              <span class="msg-priority-badge ${cls}">${lbl}</span>
+              <span>${m.time}</span>
+              <button class="mdc-btn-danger" style="padding:1px 6px;font-size:10px" onclick="removeMsg('${key}')">✕</button>
+            </span>
+          </div>
+          <div class="msg-text">${m.text}</div>
+        </div>`;
+      }).join('');
+}
+
+window.addMsg = function() {
+  const from = document.getElementById('msgFrom').value.trim();
+  const text = document.getElementById('msgText').value.trim();
+  const prio = document.getElementById('msgPrio').value;
+  if (!from || !text) return;
+  const now = new Date();
+  push(ref(db, 'messages'), { from, text, prio, time: now.toTimeString().slice(0,5), ts: Date.now() });
+  document.getElementById('msgFrom').value = '';
+  document.getElementById('msgText').value = '';
+  document.getElementById('msgPrio').value = 'normal';
+};
+
+window.removeMsg = function(key) { remove(ref(db, 'messages/' + key)); };
+
+/* ════════════════════════════
+   BOLO
+════════════════════════════ */
+onValue(ref(db, 'bolos'), snap => {
+  bolosData = snap.val() || {};
+  renderBolos();
+});
+
+function renderBolos() {
+  const entries = Object.entries(bolosData).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+  document.getElementById('boloList').innerHTML = entries.length === 0
+    ? '<div class="empty-state" style="grid-column:1/-1">Brak aktywnych BOLO.</div>'
+    : entries.map(([key, b]) => `
+        <div class="bolo-card${b.resolved ? ' resolved' : ''}">
+          <div class="bolo-img-wrap">
+            <img src="${b.img}" alt="BOLO" onclick="openLightbox('${key}')">
+            <div class="bolo-img-overlay">${b.resolved ? '✓ ZAMKNIĘTE' : '⚠ BOLO'}</div>
+          </div>
+          ${b.label ? `<div class="bolo-label">${b.label}</div>` : ''}
+          <div class="bolo-actions">
+            ${!b.resolved ? `<button class="mdc-btn" style="font-size:10px;padding:3px 8px;flex:1" onclick="resolveBolo('${key}')">Zamknij</button>` : ''}
+            <button class="mdc-btn-danger" style="font-size:10px;padding:3px 8px;flex:1" onclick="removeBoloEntry('${key}')">Usuń</button>
+          </div>
+        </div>
+      `).join('');
+}
+
+window.openLightbox = function(key) {
+  document.getElementById('lightboxImg').src = bolosData[key].img;
+  document.getElementById('lightbox').classList.add('open');
+};
+window.closeLightbox = function() { document.getElementById('lightbox').classList.remove('open'); };
+
+window.resolveBolo = function(key) { update(ref(db, 'bolos/' + key), { resolved: true }); };
+window.removeBoloEntry = function(key) { remove(ref(db, 'bolos/' + key)); };
+
+window.onFileSelect = function(e) {
+  const file = e.target.files[0];
+  if (file) loadImageFile(file);
+};
+
+function loadImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    pendingImageData = ev.target.result;
+    document.getElementById('previewImg').src = pendingImageData;
+    document.getElementById('dropPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadImageFile(file);
+});
+
+window.addBolo = function() {
+  if (!pendingImageData) { alert('Najpierw wybierz zdjęcie / dokument BOLO.'); return; }
+  const label = document.getElementById('boloLabel').value.trim().toUpperCase();
+  push(ref(db, 'bolos'), { img: pendingImageData, label: label || '', resolved: false, ts: Date.now() });
+  clearBoloForm();
+};
+
+window.clearBoloForm = function() {
+  pendingImageData = null;
+  document.getElementById('boloFileInput').value = '';
+  document.getElementById('boloLabel').value = '';
+  document.getElementById('dropPreview').style.display = 'none';
+  document.getElementById('previewImg').src = '';
+};
+
+/* ── CLOCK ── */
+document.addEventListener('click', () => { document.getElementById('statusMenu').style.display = 'none'; });
+function tick() { document.getElementById('clock').textContent = new Date().toTimeString().slice(0,8) + ' LT'; }
+tick(); setInterval(tick, 1000);
+
+</script>
+</body>
+</html>
